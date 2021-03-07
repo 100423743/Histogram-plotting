@@ -1,0 +1,323 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Histogram plotting</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+
+    <style>
+        table {
+            border: 1px solid rgb(133, 132, 132);
+            text-align: center;
+            width: 80%;
+            background-color: rgb(250, 244, 244);
+            border-color: dimgray;
+            overflow: hidden;
+        }
+
+        td {
+            border-top: 1px solid rgb(129, 128, 128);
+            border-bottom: 1px solid rgb(129, 128, 128);
+            border-right: 1px solid rgb(129, 128, 128);
+            border-left: 1px solid rgb(129, 128, 128);
+            position: relative;
+        }
+    </style>
+
+</head>
+
+<body>
+    <p>
+        <font face="Arial" size="6" style="color: saddlebrown">Histogram plotting</font><br><br>
+
+        <table align="center" id="table">
+            <thead></thead>
+            <tbody></tbody>
+        </table>
+
+        <br>
+        <font face="Arial" size=" 3" style="color: black">Select column to plot:</font>
+        <br>
+        <div id="dateSelector"></div>
+        <br>
+        <svg id="hist_sel" style="width:100%; height: 250px;"></svg>
+    </p>
+
+    <script>
+        csv_url = false ? "histogram-data.csv" : "https://raw.githubusercontent.com/100423743/Histogram-plotting/main/histogram-data.csv"
+        d3.dsv(";", csv_url,
+            (d, i, c) => {
+                if (i == 0) {
+                    d3.select("table")
+                        .append("tr")
+                        .selectAll("th")
+                        .data(c).enter()
+                        .append("th")
+                        .text(e => e)
+                }
+
+                d3.select("table")
+                    .append("tr")
+                    .selectAll("td")
+                    .data(c).enter()
+                    .append("td").text(e => d[e])
+            })
+
+        var all_data, cols, min_Val, min_Val2, max_Val, max_Val2, min_Val_d1,
+            min_Val_d2, min_Val_d3, max_Val_d1, max_Val_d2, max_Val_d3;
+        d3.dsv(';', csv_url).then(hist_sel)
+
+        function updateSelect(e) {
+            val = d3.select("select").node().value
+
+            if (val == "data1") {
+                min_Val = Math.min(min_Val_d1, 0) - 3
+                max_Val = max_Val_d1 + 7
+                
+                ch1(all_data)
+            }
+            else if (val == "data2") {
+                min_Val = Math.min(min_Val_d2, 0) - 3
+                max_Val = max_Val_d2 + 7
+
+                ch2(all_data)
+            }
+            else if (val == "data3") {
+                min_Val = Math.min(min_Val_d3, 0) - 3
+                max_Val = max_Val_d3 + 7
+
+                ch3(all_data)
+            }
+            else if (val == "x") {
+                min_Val2 = Math.min(0, min_Val_d1, min_Val_d2, min_Val_d3) - 1
+                max_Val2 = Math.max(max_Val_d1, max_Val_d2, max_Val_d3) + 11
+
+                ch(all_data)
+            }
+        }
+
+        function ch1(a) {
+            svg = d3.select("#hist_sel");
+
+            wid = svg.node().width.baseVal.value;
+            hei = svg.node().height.baseVal.value;
+
+            ind = d3.scaleLinear([0, a.length], [0, wid])
+            y = d3.scaleLinear([min_Val, max_Val], [0, hei])
+
+            map = new Set(d3.map(a, d => d.x))
+            color = d3.scaleOrdinal(map, d3.schemeTableau10)
+
+            svgBind = svg.text("")
+                .selectAll("rect")
+                .data(a)
+
+            svgBind.enter()
+                .append("text")
+                .style("font-size", 18)
+                .attr('x', 0)
+                .attr('y', 0)
+                .attr('transform',
+                    (d, i) => 'translate('+ind(i) +
+                        ',' + y(min_Val+max_Val-Math.max(d.data1, 0)-2)+'),'
+                        + 'rotate(0)')
+                .text(d => d.x)
+
+            svgBind.enter()
+                .append('rect')
+                .attr('x', (d, i) => ind(i))
+                .attr('y', d => y(min_Val+max_Val-Math.max(d.data1, 0)))
+                .attr('fill', 'lightgreen')
+                .attr('height', d => y(Math.abs(d.data1) + min_Val))
+                .attr('width', ind(1)*0.95);
+        }
+
+        function ch2(a) {
+            svg = d3.select("#hist_sel");
+
+            wid = svg.node().width.baseVal.value;
+            hei = svg.node().height.baseVal.value;
+
+            ind = d3.scaleLinear([0, a.length], [0, wid])
+            y = d3.scaleLinear([min_Val, max_Val], [0, hei])
+
+            map = new Set(d3.map(a, d => d.x))
+            color = d3.scaleOrdinal(map, d3.schemeTableau10)
+
+            svgBind = svg.text("")
+                .selectAll("rect")
+                .data(a)
+
+            svgBind.enter()
+                .append("text")
+                .style("font-size", 18)
+                .attr('x', 0)
+                .attr('y', 0)
+                .attr('transform',
+                    (d, i) => 'translate('+ind(i) +
+                        ',' + y(min_Val+max_Val - Math.max(d.data2, 0)-2)+'),'
+                        + 'rotate(0)')
+                .text(d => d.x)
+
+            svgBind.enter()
+                .append('rect')
+                .attr('x', (d, i) => ind(i))
+                .attr('y', d => y(min_Val+max_Val-Math.max(d.data2, 0)))
+                .attr('fill', 'purple')
+                .attr('height', d => y(Math.abs(d.data2) + min_Val))
+                .attr('width', ind(1) * 0.95);
+        }
+
+        function ch3(a) {
+            svg = d3.select("#hist_sel");
+
+            wid = svg.node().width.baseVal.value;
+            hei = svg.node().height.baseVal.value;
+
+            ind = d3.scaleLinear([0, a.length], [0, wid])
+            y = d3.scaleLinear([min_Val, max_Val], [0, hei])
+
+            map = new Set(d3.map(a, d => d.x))
+            color = d3.scaleOrdinal(map, d3.schemeTableau10)
+
+            svgBind = svg.text("")
+                .selectAll("rect")
+                .data(a)
+
+            svgBind.enter()
+                .append("text")
+                .style("font-size", 18)
+                .attr('x', 0)
+                .attr('y', 0)
+                .attr('transform',
+                    (d, i) => 'translate('+ind(i) +
+                        ',' + y(min_Val+max_Val-Math.max(d.data3, 0)-2)+'),'
+                        + 'rotate(0)')
+                .text(d => d.x)
+
+            svgBind.enter()
+                .append('rect')
+                .attr('x', (d, i) => ind(i))
+                .attr('y', d => y(min_Val+max_Val-Math.max(d.data3, 0)))
+                .attr('fill', 'orange')
+                .attr('height', d => y(Math.abs(d.data3) + min_Val))
+                .attr('width', ind(1) * 0.95);
+        }
+
+        function ch(a) {
+            svg = d3.select("#hist_sel");
+
+            wid = svg.node().width.baseVal.value;
+            hei = svg.node().height.baseVal.value;
+
+            ind = d3.scaleLinear([0, 3*(a.length)], [0, wid])
+            y = d3.scaleLinear([min_Val2, max_Val2], [0, hei])
+
+            map = new Set(d3.map(a, d => d.x))
+            color = d3.scaleOrdinal(map, d3.schemeTableau10)
+
+            svgBind = svg.text("")
+                .selectAll("rect")
+                .data(a)
+
+            svgBind.enter()
+                .append('rect')
+                .attr('x', (d, i) => ind(i))
+                .attr('y', d => y(min_Val2+max_Val2-Math.max(d.data1, 0)))
+                .attr('fill', 'lightgreen')
+                .attr('height', d => y(Math.abs(d.data1) + min_Val2))
+                .attr('width', ind(1)*0.90)
+
+            svgBind.enter()
+                .append('rect')
+                .attr('x', (d, i) => ind(i+a.length))
+                .attr('y', d => y(min_Val2+max_Val2-Math.max(d.data2, 0)))
+                .attr('fill', 'purple')
+                .attr('height', d => y(Math.abs(d.data2) + min_Val2))
+                .attr('width', ind(1)*0.90)
+
+            svgBind.enter()
+                .append('rect')
+                .attr('x', (d, i) => ind(i+2*(a.length)))
+                .attr('y', d => y(min_Val2+max_Val2-Math.max(d.data3, 0)))
+                .attr('fill', 'orange')
+                .attr('height', d => y(Math.abs(d.data3) + min_Val2))
+                .attr('width', ind(1)*0.90)
+
+            svgBind.enter()
+                .append("text")
+                .style("font-size", ind(1) * 0.33)
+                .attr('x', ind(a.length))
+                .attr('y', 0)
+                .attr('transform',
+                    (d, i) => 'translate('+ind(i) +
+                        ',' + y(min_Val2+max_Val2-Math.max(d.data2, 0)-2)+'),'
+                        + 'rotate(0)')
+                .text(d => d.x);
+
+            svgBind.enter()
+                .append("text")
+                .style("font-size", ind(1) * 0.33)
+                .attr('x', 0)
+                .attr('y', 0)
+                .attr('transform',
+                    (d, i) => 'translate('+ind(i) +
+                        ',' + y(min_Val2+max_Val2-Math.max(d.data1, 0)-2)+'),'
+                        + 'rotate(0)')
+                .text(d => d.x);
+
+            svgBind.enter()
+                .append("text")
+                .style("font-size", ind(1) * 0.33)
+                .attr('x', ind(2*(a.length)))
+                .attr('y', 0)
+                .attr('transform',
+                    (d, i) => 'translate('+ind(i) +
+                        ',' + y(min_Val2+max_Val2-Math.max(d.data3, 0)-2)+'),'
+                        + 'rotate(0)')
+                .text(d => d.x);
+        }
+
+        function dateSelector(d) {
+            htmlNode = d3.select("#dateSelector");
+            htmlNode.append("label")
+                .attr("for", "columns")
+                .attr("class", "normal")
+                .style("font-family", "arial");
+            htmlNode.append("select")
+                .attr("id", "columns")
+                .on("change", d => updateSelect(d))
+                .selectAll("option")
+                .data(d).enter()
+                .append("option")
+                .attr("value", e => e)
+                .text(function (e) {
+                    if (e == "x") {
+                        return ("Multivariate")
+                    }
+                    else {
+                        return (e)
+                    }
+                })
+        }
+
+        function hist_sel(h) {
+            all_data = h;
+            cols = h.columns;
+
+            min_Val_d1 = d3.reduce(h, (i, j) => Math.min(i, j.data1), 0)
+            min_Val_d2 = d3.reduce(h, (i, j) => Math.min(i, j.data2), 0)
+            min_Val_d3 = d3.reduce(h, (i, j) => Math.min(i, j.data3), 0)
+            max_Val_d1 = d3.reduce(h, (i, j) => Math.max(i, j.data1), 0)
+            max_Val_d2 = d3.reduce(h, (i, j) => Math.max(i, j.data2), 0)
+            max_Val_d3 = d3.reduce(h, (i, j) => Math.max(i, j.data3), 0)
+            dateSelector(cols);
+            updateSelect()
+        }
+
+    </script>
+</body>
+</html>
+   
+
+
+
